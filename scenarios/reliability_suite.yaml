@@ -1,0 +1,40 @@
+name: "Reliability Chaos Suite"
+target:
+  transport: stdio
+  command: ["python", "-m", "chaosmcp.demo", "--server"]
+
+scenarios:
+  - name: "Tool Timeout & Recovery"
+    description: "Delays get_weather past client timeout to test graceful degradation"
+    runs: 5
+    prompt: "What is the weather in Tokyo?"
+    seed: 100
+    faults:
+      - type: timeout
+        tool: get_weather
+        probability: 0.6
+        delay_ms: 5000
+
+  - name: "Truncated & Malformed Responses"
+    description: "Cuts off stream halfway or returns invalid JSON"
+    runs: 5
+    prompt: "What is the weather in Paris?"
+    seed: 200
+    faults:
+      - type: truncate
+        tool: get_weather
+        probability: 0.5
+        keep_ratio: 0.4
+      - type: malformed_json
+        tool: get_weather
+        probability: 0.5
+
+  - name: "Massive Payload Stress"
+    description: "Dumps a 512 KB payload into tool output to test context handling"
+    runs: 3
+    prompt: "Fetch notes on reliability"
+    faults:
+      - type: huge_payload
+        tool: fetch_notes
+        probability: 1.0
+        size_kb: 512
