@@ -142,9 +142,10 @@ async def _call_http_mcp(
     timeout_s: float = 3.0,
 ) -> dict[str, Any]:
     payload = {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params or {}}
-    async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
-        text = await resp.text()
-        return json.loads(text)
+    async with asyncio.timeout(timeout_s):
+        async with session.post(url, json=payload) as resp:
+            text = await resp.text()
+            return json.loads(text)
 
 
 async def run_simulated_agent(
